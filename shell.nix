@@ -21,6 +21,7 @@ stdenv.mkDerivation rec {
 
   postInstall = ''
   export PG_DATA ="data"
+  mkdir data
   initdb -D data
   pg_ctl -D data -l data/logfile start
   createdb ${defaultDb}
