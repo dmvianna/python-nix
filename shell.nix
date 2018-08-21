@@ -6,8 +6,7 @@ let pyenv = python36.withPackages (ps: with ps; [
     numpy
     matplotlib
     ]);
-    defaultDb = "data";
-   
+
 in
 
 stdenv.mkDerivation rec {
@@ -19,17 +18,20 @@ stdenv.mkDerivation rec {
     screen
   ];
 
-  postInstall = ''
-  export PG_DATA ="data"
-  mkdir data
-  initdb -D data
-  pg_ctl -D data -l data/logfile start
-  createdb ${defaultDb}
-  '';
   shellHook = ''
+  # set -x
+  set -e
+  export PG_DATA="data"
+  [ -d data ] || mkdir data
+  datafiles=$(ls -A data)
+  if [ -z ''${datafiles:0:1} ]; then
+     initdb -D data
+     createdb $(whoami)
+  fi
+  pg_ctl -D data -l data/logfile start
   echo ""
   echo "using ${pyenv.name}; ${postgresql.name}"
-  echo "default database: ${defaultDb}"
+  echo "default database: $(whoami)"
   '';
 
 }
