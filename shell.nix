@@ -15,23 +15,38 @@ stdenv.mkDerivation rec {
   buildInputs = [
     pyenv
     postgresql
-    screen
   ];
 
   shellHook = ''
   # set -x
-  set -e
-  export PG_DATA="data"
+  
+  startdb () 
+  { 
+    pg_ctl -D data -l data/logfile start
+  }
+
+  stopdb ()
+  {
+    pg_ctl -D data stop
+  }
+
+  # main
+  export PGDATA="data"
   [ -d data ] || mkdir data
   datafiles=$(ls -A data)
   if [ -z ''${datafiles:0:1} ]; then
      initdb -D data
+     wait
+     startdb
+     sleep 1
      createdb $(whoami)
+  else
+     startdb
   fi
-  pg_ctl -D data -l data/logfile start
   echo ""
   echo "using ${pyenv.name}; ${postgresql.name}"
   echo "default database: $(whoami)"
+  echo "don't forget to stop db (stopdb) before exiting!"
   '';
 
 }
