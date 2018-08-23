@@ -11,42 +11,28 @@ in
 
 stdenv.mkDerivation rec {
   name = "python-env";
-
   buildInputs = [
     pyenv
     postgresql
   ];
-
+  PGDATA = "data";
   shellHook = ''
-  # set -x
+  trap "kill 0" EXIT
   
-  startdb () 
-  { 
-    pg_ctl -D data -l data/logfile start
-  }
-
-  stopdb ()
-  {
-    pg_ctl -D data stop
-  }
-
-  # main
-  export PGDATA="data"
   [ -d data ] || mkdir data
   datafiles=$(ls -A data)
   if [ -z ''${datafiles:0:1} ]; then
-     initdb -D data
+     initdb
      wait
-     startdb
+     postgres &
      sleep 1
      createdb $(whoami)
   else
-     startdb
+     postgres &
   fi
   echo ""
   echo "using ${pyenv.name}; ${postgresql.name}"
   echo "default database: $(whoami)"
-  echo "don't forget to stop db (stopdb) before exiting!"
   '';
 
 }
